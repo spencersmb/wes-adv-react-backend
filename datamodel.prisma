@@ -15,3 +15,9 @@ type User {
    updatedAt: DateTime!
    # user: User!
  }
+
+ type Product {
+   id: ID! @unique
+   title: String!
+   description: String!
+ }
