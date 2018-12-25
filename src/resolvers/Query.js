@@ -1,7 +1,6 @@
 const {forwardTo} = require('prisma-binding') // gives us the ability to query our DB using yoga
-
 const Query = {
-  
+
   // Quick way to mock up api requests and build it out later with AUTH
   items: forwardTo('db'),
 
