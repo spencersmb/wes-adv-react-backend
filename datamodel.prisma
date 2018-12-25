@@ -1,4 +1,5 @@
 # Everytime we edit this file we must npm run deploy
+# ! is used to say the item cannot be null
 type User {
   id: ID! @unique
   name: String!
@@ -11,8 +12,8 @@ type User {
    image: String
    largeImage: String
    price: Int!
-   createAt: DateTime!
-   updatedAt: DateTime!
+  #  createAt: DateTime!
+  #  updatedAt: DateTime!
    # user: User!
  }
 

@@ -6,10 +6,10 @@ const db = require('./db')
 // Create the GraphQL Yoga Server
 function createServer () {
   return new GraphQLServer({
-    typeDefs: 'src/schema.graphql',
+    typeDefs: 'src/schema.graphql', // specific GraphQL mutations and Query's we custom write
     resolvers: {
-      Mutation,
-      Query,
+      Mutation, // push data
+      Query, // get data
     },
     resolverValidationOptions: {
       requireResolversForResolveType: false,
