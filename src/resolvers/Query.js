@@ -1,8 +1,15 @@
 const {forwardTo} = require('prisma-binding') // gives us the ability to query our DB using yoga
+
+// Process to create a query
+// 1. Edit schema.graphql
+// 2. Edit Query.js or Mutations.js
+// 3. Restart server + playhground then test in playground
+
 const Query = {
 
   // Quick way to mock up api requests and build it out later with AUTH
   items: forwardTo('db'),
+  item: forwardTo('db'),
 
   // MANUAL WAY
   // parent - schema of graphQL
