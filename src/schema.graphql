@@ -1,13 +1,31 @@
 # import * from './generated/prisma.graphql'
 # Got ItemWhereUniqueInput from prisma.graphql file
+type SuccessMessage {
+  message: String!
+}
 
 type Mutation {
     createItem(title: String, description: String, price: Int, image: String, largeImage: String): Item!
     updateItem(id: ID!, title: String, description: String, price: Int): Item!
     deleteItem(id: ID!): Item!
+    signup(email: String!, name: String!, password: String!): User!
+    signin(email: String!, password: String!): User!
+    signout: SuccessMessage
+    requestReset(email: String!): SuccessMessage!
+    resetPassword(token: String!, password: String!, confirmPassword: String!): User!
 }
 
 type Query {
-    items: [Item]!
-    item(where: ItemWhereUniqueInput!): Item
+  items(where: ItemWhereInput, orderBy: ItemOrderByInput, skip: Int, first: Int): [Item]!
+  item(where: ItemWhereUniqueInput!): Item
+  itemsConnection(where: ItemWhereInput): ItemConnection!
+  me: User
+}
+
+# Redefine user obj and what can go to client side
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  permission: [Permission!]!
 }

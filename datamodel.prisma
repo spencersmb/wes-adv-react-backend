@@ -1,9 +1,21 @@
 # Everytime we edit this file we must npm run deploy
 # ! is used to say the item cannot be null
+enum Permission {
+  ADMIN
+  USER
+  ITEMCREATE
+  ITEMUPDATE
+  ITEMDELETE
+  PERMISSIONUPDATE
+}
 type User {
   id: ID! @unique
   name: String!
-  email: String!
+  email: String! @unique
+  password: String!
+  resetToken: String
+  resetExpTime: String
+  permission: [Permission]
 }
  type Item {
    id: ID! @unique
