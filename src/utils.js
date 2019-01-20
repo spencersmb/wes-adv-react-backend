@@ -14,5 +14,5 @@ function hasPermission(user, permissionsNeeded) {
   }
 }
 
-// new push
+// new push again
 exports.hasPermission = hasPermission;
