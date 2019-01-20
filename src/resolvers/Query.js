@@ -1,5 +1,5 @@
 const {forwardTo} = require('prisma-binding') // gives us the ability to query our DB using yoga
-
+const {hasPermission} = require ('../utils')
 // Process to create a query
 // 1. Edit schema.graphql
 // 2. Edit Query.js or Mutations.js
@@ -25,7 +25,22 @@ const Query = {
         id: ctx.request.userId
       }
     }, info)
+  },
+  async users(parent, args, ctx, info){
+    // 1. Check if user has prevlidge to manage users
+    // console.log('ctx.request.user', ctx.request.user);
+
+    if(!ctx.request.userId){
+      throw new Error('Sorry user does not have permission to edit Permissions')
+    }
+    
+    // 2. Check if user has prevlidge to manage users
+    hasPermission(ctx.request.user, ['ADMIN', 'PERMISSIONUPDATE'])
+    
+    // 3. if they do - query all users
+    return ctx.db.query.users({},info)
   }
+  
 
   // MANUAL WAY
   // parent - schema of graphQL

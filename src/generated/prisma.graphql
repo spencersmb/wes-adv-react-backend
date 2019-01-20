@@ -1,5 +1,5 @@
 # source: https://us1.prisma.sh/spencer-4d6dc7/sick-fits-demo/dev
-# timestamp: Sun Jan 06 2019 19:37:28 GMT-0500 (Eastern Standard Time)
+# timestamp: Sun Jan 13 2019 00:29:19 GMT-0500 (Eastern Standard Time)
 
 type AggregateItem {
   count: Int!
@@ -25,6 +25,7 @@ type Item implements Node {
   image: String
   largeImage: String
   price: Int!
+  user: User!
 }
 
 """A connection to a list of items."""
@@ -43,6 +44,7 @@ input ItemCreateInput {
   image: String
   largeImage: String
   price: Int!
+  user: UserCreateOneInput!
 }
 
 """An edge in a connection."""
@@ -127,6 +129,7 @@ input ItemUpdateInput {
   image: String
   largeImage: String
   price: Int
+  user: UserUpdateOneRequiredInput
 }
 
 input ItemUpdateManyMutationInput {
@@ -368,6 +371,7 @@ input ItemWhereInput {
 
   """All values greater than or equal the given value."""
   price_gte: Int
+  user: UserWhereInput
 }
 
 input ItemWhereUniqueInput {
@@ -381,24 +385,24 @@ Long can represent values between -(2^63) and 2^63 - 1.
 scalar Long
 
 type Mutation {
-  createUser(data: UserCreateInput!): User!
   createItem(data: ItemCreateInput!): Item!
   createProduct(data: ProductCreateInput!): Product!
-  updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
+  createUser(data: UserCreateInput!): User!
   updateItem(data: ItemUpdateInput!, where: ItemWhereUniqueInput!): Item
   updateProduct(data: ProductUpdateInput!, where: ProductWhereUniqueInput!): Product
-  deleteUser(where: UserWhereUniqueInput!): User
+  updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
   deleteItem(where: ItemWhereUniqueInput!): Item
   deleteProduct(where: ProductWhereUniqueInput!): Product
-  upsertUser(where: UserWhereUniqueInput!, create: UserCreateInput!, update: UserUpdateInput!): User!
+  deleteUser(where: UserWhereUniqueInput!): User
   upsertItem(where: ItemWhereUniqueInput!, create: ItemCreateInput!, update: ItemUpdateInput!): Item!
   upsertProduct(where: ProductWhereUniqueInput!, create: ProductCreateInput!, update: ProductUpdateInput!): Product!
-  updateManyUsers(data: UserUpdateManyMutationInput!, where: UserWhereInput): BatchPayload!
+  upsertUser(where: UserWhereUniqueInput!, create: UserCreateInput!, update: UserUpdateInput!): User!
   updateManyItems(data: ItemUpdateManyMutationInput!, where: ItemWhereInput): BatchPayload!
   updateManyProducts(data: ProductUpdateManyMutationInput!, where: ProductWhereInput): BatchPayload!
-  deleteManyUsers(where: UserWhereInput): BatchPayload!
+  updateManyUsers(data: UserUpdateManyMutationInput!, where: UserWhereInput): BatchPayload!
   deleteManyItems(where: ItemWhereInput): BatchPayload!
   deleteManyProducts(where: ProductWhereInput): BatchPayload!
+  deleteManyUsers(where: UserWhereInput): BatchPayload!
 }
 
 enum MutationType {
@@ -671,15 +675,15 @@ input ProductWhereUniqueInput {
 }
 
 type Query {
-  users(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [User]!
   items(where: ItemWhereInput, orderBy: ItemOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Item]!
   products(where: ProductWhereInput, orderBy: ProductOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Product]!
-  user(where: UserWhereUniqueInput!): User
+  users(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [User]!
   item(where: ItemWhereUniqueInput!): Item
   product(where: ProductWhereUniqueInput!): Product
-  usersConnection(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): UserConnection!
+  user(where: UserWhereUniqueInput!): User
   itemsConnection(where: ItemWhereInput, orderBy: ItemOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): ItemConnection!
   productsConnection(where: ProductWhereInput, orderBy: ProductOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): ProductConnection!
+  usersConnection(where: UserWhereInput, orderBy: UserOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): UserConnection!
 
   """Fetches an object given its ID"""
   node(
@@ -689,19 +693,20 @@ type Query {
 }
 
 type Subscription {
-  user(where: UserSubscriptionWhereInput): UserSubscriptionPayload
   item(where: ItemSubscriptionWhereInput): ItemSubscriptionPayload
   product(where: ProductSubscriptionWhereInput): ProductSubscriptionPayload
+  user(where: UserSubscriptionWhereInput): UserSubscriptionPayload
 }
 
 type User implements Node {
   id: ID!
   name: String!
   email: String!
+  permission: [Permission!]!
+  perms: String
   password: String!
   resetToken: String
   resetExpTime: String
-  permission: [Permission!]!
 }
 
 """A connection to a list of items."""
@@ -717,10 +722,16 @@ type UserConnection {
 input UserCreateInput {
   name: String!
   email: String!
+  perms: String
   password: String!
   resetToken: String
   resetExpTime: String
   permission: UserCreatepermissionInput
+}
+
+input UserCreateOneInput {
+  create: UserCreateInput
+  connect: UserWhereUniqueInput
 }
 
 input UserCreatepermissionInput {
@@ -743,6 +754,8 @@ enum UserOrderByInput {
   name_DESC
   email_ASC
   email_DESC
+  perms_ASC
+  perms_DESC
   password_ASC
   password_DESC
   resetToken_ASC
@@ -759,10 +772,11 @@ type UserPreviousValues {
   id: ID!
   name: String!
   email: String!
+  permission: [Permission!]!
+  perms: String
   password: String!
   resetToken: String
   resetExpTime: String
-  permission: [Permission!]!
 }
 
 type UserSubscriptionPayload {
@@ -804,9 +818,20 @@ input UserSubscriptionWhereInput {
   node: UserWhereInput
 }
 
+input UserUpdateDataInput {
+  name: String
+  email: String
+  perms: String
+  password: String
+  resetToken: String
+  resetExpTime: String
+  permission: UserUpdatepermissionInput
+}
+
 input UserUpdateInput {
   name: String
   email: String
+  perms: String
   password: String
   resetToken: String
   resetExpTime: String
@@ -816,14 +841,27 @@ input UserUpdateInput {
 input UserUpdateManyMutationInput {
   name: String
   email: String
+  perms: String
   password: String
   resetToken: String
   resetExpTime: String
   permission: UserUpdatepermissionInput
 }
 
+input UserUpdateOneRequiredInput {
+  create: UserCreateInput
+  connect: UserWhereUniqueInput
+  update: UserUpdateDataInput
+  upsert: UserUpsertNestedInput
+}
+
 input UserUpdatepermissionInput {
   set: [Permission!]
+}
+
+input UserUpsertNestedInput {
+  update: UserUpdateDataInput!
+  create: UserCreateInput!
 }
 
 input UserWhereInput {
@@ -955,6 +993,46 @@ input UserWhereInput {
 
   """All values not ending with the given string."""
   email_not_ends_with: String
+  perms: String
+
+  """All values that are not equal to given value."""
+  perms_not: String
+
+  """All values that are contained in given list."""
+  perms_in: [String!]
+
+  """All values that are not contained in given list."""
+  perms_not_in: [String!]
+
+  """All values less than the given value."""
+  perms_lt: String
+
+  """All values less than or equal the given value."""
+  perms_lte: String
+
+  """All values greater than the given value."""
+  perms_gt: String
+
+  """All values greater than or equal the given value."""
+  perms_gte: String
+
+  """All values containing the given string."""
+  perms_contains: String
+
+  """All values not containing the given string."""
+  perms_not_contains: String
+
+  """All values starting with the given string."""
+  perms_starts_with: String
+
+  """All values not starting with the given string."""
+  perms_not_starts_with: String
+
+  """All values ending with the given string."""
+  perms_ends_with: String
+
+  """All values not ending with the given string."""
+  perms_not_ends_with: String
   password: String
 
   """All values that are not equal to given value."""

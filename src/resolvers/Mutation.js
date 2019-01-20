@@ -2,6 +2,8 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const {randomBytes} = require('crypto')
 const {promisify} = require('util')
+const {transport, emailTemplate} = require('../mail')
+const {hasPermission} = require ('../utils')
 
 const Mutations = {
   // parent - schema of graphQL
@@ -10,12 +12,21 @@ const Mutations = {
   // info - information on the graphQL query
   async createItem (parent, args, ctx, info) {
     
-    // TODO: AUTH - check if user is logged in
+    // 1. check if user is logged in
+    if(!ctx.request.userId){
+      throw new Error('You must be logged in!')
+    }
 
     // we put the db on the ctx object in our other file,
     // createServer.js, we put it on CONTEXT
     const item = await ctx.db.mutation.createItem({
       data: {
+        // this is how we provide a relationship of an item to user
+        user:{
+          connect:{
+            id: ctx.request.userId
+          }
+        },
         ...args
       }
     }, info) // info makes sure we return that item that was added to the DB
@@ -25,6 +36,7 @@ const Mutations = {
   updateItem (parent, args, ctx, info) {
     // first make copy of updates
     const updates = {...args}
+
     // remove ID from updates obj
     delete updates.id
     // run update method
@@ -42,10 +54,15 @@ const Mutations = {
     // 1. find item 
     // the backticks are passing a manual query because the items query is nested inside 
     // the delete mutation
-    const item = await ctx.db.query.items({where}, `{id title}`)
+    const item = await ctx.db.query.item({where}, `{id title user { id }}`)
+    const ownsItems = item.user.id !== ctx.request.userId
 
     // 2. Check if they own that item, or have the permissions
+    if(ownsItems){
+      throw new Error('Sorry you cannot delete, you are not the owner of this item.')
+    }
 
+    hasPermission(ctx.request.user, ['ITEMDELETE'])
 
     // 3. Delete it!
     return ctx.db.mutation.deleteItem({ where }, info)
@@ -140,7 +157,7 @@ const Mutations = {
 
     // 2 set resetTOken and expiry
     const randomBytesPromised = promisify(randomBytes)
-    const resetToken = await randomBytesPromised(20)
+    const resetToken = (await randomBytesPromised(20)).toString('hex')
 
     const resetTokenExp = Date.now( ) + 3600000 // 1hr from now
 
@@ -149,11 +166,24 @@ const Mutations = {
         email: args.email 
       },
       data:{
-        resetToken: resetToken.toString('hex'),
+        resetToken: resetToken,
         resetExpTime: resetTokenExp,
       },
     })
-    // email them the reset token
+
+    // 3. email them the reset token
+    const mailResp = await transport.sendMail({
+      from: 'spencer@gmail.com',
+      to: user.email,
+      subject: 'Password Reset',
+      html: emailTemplate(`
+        Your password reset token is here! 
+        \n\n
+        <a href="${process.env.FRONTEND_URL}/reset?resetToken=${resetToken}">Click here to Reset</a>
+      `)
+    })
+
+
     return {
       message: "Thanks!"
     }
@@ -209,6 +239,42 @@ const Mutations = {
 
     // 9. return User
     return updateUser
+  },
+  async updateUser(parent, args, ctx, info){
+    
+    // 1. Check if user logged in
+    if(!ctx.request.userId){
+      throw new Error('You must be logged in!')
+    }
+
+    // 2. Query the current user to check if they are admin
+    const currentUser = await ctx.db.query.user({
+      where: {
+        id: args.userId
+      }
+    })
+    console.log('current User', currentUser);
+
+    // 3. check if they have correct permissions
+    hasPermission(ctx.request.user, ['ADMIN', 'PERMISSIONUPDATE'])
+
+    // update user
+    const updates = {...args}
+
+    delete updates.userId
+
+    if(args.permission){
+      updates.permission = {set: [...args.permission]}
+    }
+
+    return ctx.db.mutation.updateUser({
+      data: updates,
+      where: {
+        id: args.userId
+      }
+    }, info)
+
+     
   }
 
 }

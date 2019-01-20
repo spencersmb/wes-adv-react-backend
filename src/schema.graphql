@@ -13,6 +13,7 @@ type Mutation {
     signout: SuccessMessage
     requestReset(email: String!): SuccessMessage!
     resetPassword(token: String!, password: String!, confirmPassword: String!): User!
+    updateUser(userId: ID!, name: String, email: String, permission: [String]): User
 }
 
 type Query {
@@ -20,12 +21,13 @@ type Query {
   item(where: ItemWhereUniqueInput!): Item
   itemsConnection(where: ItemWhereInput): ItemConnection!
   me: User
+  users: [User]!
 }
 
 # Redefine user obj and what can go to client side
-type User {
-  id: ID!
-  name: String!
-  email: String!
-  permission: [Permission!]!
-}
+# type User {
+#   id: ID!
+#   name: String!
+#   email: String!
+#   permission: [Permission!]!
+# }

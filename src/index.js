@@ -9,13 +9,30 @@ const server = createServer()
 // Use xpress middleware to handle cookies(JWT)
 server.express.use(cookieParser())
 
-// TODO: Use xpress middleware to populate current user
+// Use xpress middleware to populate current user
 server.express.use((req, res, next) => {
   const {token} = req.cookies
   if(token){
     const {userId} = jwt.verify(token, process.env.APP_SECRET)
     // put userID onto the request 
     req.userId = userId
+  }
+  next();
+})
+
+// Middlewear that populates the user object on request
+server.express.use(async (req, res, next) => {
+  if(!req.userId){
+    return next()
+  }
+  const user = await db.query.user({
+    where:{
+      id: req.userId
+    }
+  }, '{id, name, email, permission}')
+  
+  if(user){
+    req.user = user
   }
   next();
 })
